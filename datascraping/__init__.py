@@ -1,5 +1,5 @@
-"""Datascraping package for didaktikzentrum.de."""
+"""DIZ Scraper package."""
 
-from .scraper import DizScraper
+from . import debug_tool, read_csv, scraper
 
-__all__ = ['DizScraper'] 
+__version__ = "0.1.0"

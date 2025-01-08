@@ -1,12 +1,13 @@
 import csv
 import os
 from datetime import datetime
+from typing import Dict, List, Optional, Union
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 
-def save_debug_response(response, filename_prefix):
+def save_debug_response(response: requests.Response, filename_prefix: str) -> str:
     """Save raw HTML response to a debug file."""
     if not os.path.exists("debug"):
         os.makedirs("debug")
@@ -19,7 +20,7 @@ def save_debug_response(response, filename_prefix):
     return filename
 
 
-def extract_seminar_details(detail_url, session):
+def extract_seminar_details(detail_url: str, session: requests.Session) -> Optional[Dict[str, str]]:
     """Extract additional information from seminar detail pages."""
     try:
         response = session.get(detail_url)
@@ -44,14 +45,14 @@ def extract_seminar_details(detail_url, session):
         return None
 
 
-def clean_text(text):
+def clean_text(text: Optional[str]) -> str:
     """Clean text by removing extra whitespace and newlines."""
     if not text:
         return ""
     return " ".join(text.replace("\n", " ").split())
 
 
-def extract_certificate_info(cell):
+def extract_certificate_info(cell: Optional[Tag]) -> tuple[str, str]:
     """Extract structured certificate information."""
     if not cell:
         return "", ""
@@ -65,7 +66,7 @@ def extract_certificate_info(cell):
     return certificate, area
 
 
-def extract_regular_description(description_div):
+def extract_regular_description(description_div: Optional[Tag]) -> Optional[str]:
     """Extract description from regular seminar page structure."""
     if not description_div:
         return None
@@ -78,7 +79,7 @@ def extract_regular_description(description_div):
     return None
 
 
-def extract_neuberufene_description(content_div):
+def extract_neuberufene_description(content_div: Tag) -> Optional[str]:
     """Extract description from neuberufene seminar page structure."""
     if not content_div:
         return None
@@ -99,7 +100,7 @@ def extract_neuberufene_description(content_div):
     return None
 
 
-def extract_fallback_description(main_content):
+def extract_fallback_description(main_content: Optional[Tag]) -> Optional[str]:
     """Extract description from main content as a fallback."""
     if not main_content:
         return None
@@ -110,7 +111,7 @@ def extract_fallback_description(main_content):
     return None
 
 
-def clean_description(description):
+def clean_description(description: str) -> str:
     """Clean up the description text."""
     description = description.strip()
     if description.startswith("INHALT"):
@@ -118,7 +119,7 @@ def clean_description(description):
     return description
 
 
-def get_description_from_detail_page(detail_page_soup):
+def get_description_from_detail_page(detail_page_soup: BeautifulSoup) -> Optional[str]:
     """Extract description from a seminar detail page.
 
     Tries different page structures in order:
@@ -129,9 +130,10 @@ def get_description_from_detail_page(detail_page_soup):
     try:
         # Try regular seminar page structure
         description_div = detail_page_soup.find("div", class_="diz-event-details")
-        description = extract_regular_description(description_div)
-        if description:
-            return description
+        if isinstance(description_div, Tag):
+            description = extract_regular_description(description_div)
+            if description:
+                return description
 
         # Try neuberufene seminar page structure
         content_divs = detail_page_soup.find_all("div", class_="sppb-addon-content")
@@ -142,9 +144,10 @@ def get_description_from_detail_page(detail_page_soup):
 
         # Fallback to main content
         main_content = detail_page_soup.find("div", id="sp-component")
-        description = extract_fallback_description(main_content)
-        if description:
-            return description
+        if isinstance(main_content, Tag):
+            description = extract_fallback_description(main_content)
+            if description:
+                return description
 
     except Exception as e:
         print(f"Error extracting description: {str(e)}")
@@ -153,7 +156,7 @@ def get_description_from_detail_page(detail_page_soup):
     return None
 
 
-def scrape_seminars(debug_mode=False):
+def scrape_seminars(debug_mode: bool = False) -> Optional[List[Dict[str, str]]]:
     """Scrape seminar information from the website."""
     url = "https://didaktikzentrum.de/programm/aktuelles-programm/simplelist"
 
@@ -174,7 +177,7 @@ def scrape_seminars(debug_mode=False):
         # Find all seminar rows
         seminar_rows = soup.find_all("tr", itemtype="http://schema.org/Event")
 
-        seminars = []
+        seminars: List[Dict[str, str]] = []
         for row in seminar_rows:
             # Extract status
             status_img = row.find("img", class_="hasTip")

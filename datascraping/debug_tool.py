@@ -2,6 +2,7 @@ import csv
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import List
 from urllib.parse import urlparse
 
 import requests
@@ -11,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_sample_urls(csv_file="seminars.csv"):
+def get_sample_urls(csv_file: str = "seminars.csv") -> List[str]:
     """Get a representative sample of URLs with missing content"""
     try:
         urls = set()  # Using set to avoid duplicates
@@ -23,7 +24,7 @@ def get_sample_urls(csv_file="seminars.csv"):
 
         # Get unique base paths
         unique_paths = set()
-        sample_urls = []
+        sample_urls: List[str] = []
         for url in urls:
             parsed = urlparse(url)
             path = parsed.path
@@ -45,7 +46,7 @@ def get_sample_urls(csv_file="seminars.csv"):
         return []
 
 
-def fetch_and_save_responses(urls):
+def fetch_and_save_responses(urls: List[str]) -> None:
     """Fetch and save HTML responses for the given URLs"""
     debug_dir = Path("debug")
     debug_dir.mkdir(exist_ok=True)
@@ -73,7 +74,7 @@ def fetch_and_save_responses(urls):
             logger.error(f"Error saving response for {url}: {e}")
 
 
-def main():
+def main() -> None:
     # Get sample URLs
     sample_urls = get_sample_urls()
     if sample_urls:
