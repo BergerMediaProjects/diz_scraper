@@ -1,4 +1,5 @@
 import csv
+import logging
 import os
 from datetime import datetime
 from typing import Dict, List, Optional, Union
@@ -6,17 +7,27 @@ from typing import Dict, List, Optional, Union
 import requests
 from bs4 import BeautifulSoup, Tag
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger(__name__)
+
 
 def save_debug_response(response: requests.Response, filename_prefix: str) -> str:
     """Save raw HTML response to a debug file."""
     if not os.path.exists("debug"):
         os.makedirs("debug")
+        logger.debug("Created debug directory")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"debug/debug_response_{filename_prefix}_{timestamp}.html"
 
     with open(filename, "w", encoding="utf-8") as f:
         f.write(response.text)
+    logger.debug(f"Saved debug response to {filename}")
     return filename
 
 
@@ -30,9 +41,9 @@ def extract_seminar_details(detail_url: str, session: requests.Session) -> Optio
         # Extract description using the improved function
         description = get_description_from_detail_page(soup)
         if description:
-            print(f"Found description for {detail_url}: {description[:100]}...")
+            logger.info(f"Found description for {detail_url}: {description[:100]}...")
         else:
-            print(f"No description found for {detail_url}")
+            logger.warning(f"No description found for {detail_url}")
 
         # Save the raw response to a debug file
         filename = save_debug_response(
@@ -41,7 +52,7 @@ def extract_seminar_details(detail_url: str, session: requests.Session) -> Optio
 
         return {"description": description or "", "debug_file": filename}
     except Exception as e:
-        print(f"Error fetching detail page {detail_url}: {e}")
+        logger.error(f"Error fetching detail page {detail_url}: {e}")
         return None
 
 
@@ -133,6 +144,7 @@ def get_description_from_detail_page(detail_page_soup: BeautifulSoup) -> Optiona
         if isinstance(description_div, Tag):
             description = extract_regular_description(description_div)
             if description:
+                logger.debug("Found description in regular seminar structure")
                 return description
 
         # Try neuberufene seminar page structure
@@ -140,6 +152,7 @@ def get_description_from_detail_page(detail_page_soup: BeautifulSoup) -> Optiona
         for content_div in content_divs:
             description = extract_neuberufene_description(content_div)
             if description:
+                logger.debug("Found description in neuberufene structure")
                 return description
 
         # Fallback to main content
@@ -147,10 +160,13 @@ def get_description_from_detail_page(detail_page_soup: BeautifulSoup) -> Optiona
         if isinstance(main_content, Tag):
             description = extract_fallback_description(main_content)
             if description:
+                logger.debug("Found description in main content")
                 return description
 
+        logger.debug("No description found in any structure")
+
     except Exception as e:
-        print(f"Error extracting description: {str(e)}")
+        logger.error(f"Error extracting description: {str(e)}")
         return None
 
     return None
@@ -159,6 +175,7 @@ def get_description_from_detail_page(detail_page_soup: BeautifulSoup) -> Optiona
 def scrape_seminars(debug_mode: bool = False) -> Optional[List[Dict[str, str]]]:
     """Scrape seminar information from the website."""
     url = "https://didaktikzentrum.de/programm/aktuelles-programm/simplelist"
+    logger.info(f"Starting scraping from {url}")
 
     # Create a session to maintain cookies
     session = requests.Session()
@@ -167,18 +184,23 @@ def scrape_seminars(debug_mode: bool = False) -> Optional[List[Dict[str, str]]]:
         # Fetch the main page
         response = session.get(url)
         response.raise_for_status()
+        logger.debug("Successfully fetched main page")
 
         if debug_mode:
             # Save raw response
             save_debug_response(response, "raw_response")
+            logger.debug("Saved raw response in debug mode")
 
         soup = BeautifulSoup(response.text, "html.parser")
 
         # Find all seminar rows
         seminar_rows = soup.find_all("tr", itemtype="http://schema.org/Event")
+        logger.info(f"Found {len(seminar_rows)} seminars to process")
 
         seminars: List[Dict[str, str]] = []
-        for row in seminar_rows:
+        for i, row in enumerate(seminar_rows, 1):
+            logger.debug(f"Processing seminar {i}/{len(seminar_rows)}")
+            
             # Extract status
             status_img = row.find("img", class_="hasTip")
             status = status_img["title"] if status_img else "Unknown"
@@ -217,6 +239,7 @@ def scrape_seminars(debug_mode: bool = False) -> Optional[List[Dict[str, str]]]:
 
             # Fetch details for all seminars with a detail URL
             if detail_url:
+                logger.debug(f"Fetching details for seminar: {title}")
                 details = extract_seminar_details(detail_url, session)
                 if details:
                     seminar.update(details)
@@ -242,11 +265,11 @@ def scrape_seminars(debug_mode: bool = False) -> Optional[List[Dict[str, str]]]:
             writer.writeheader()
             writer.writerows(seminars)
 
-        print(f"Successfully saved {len(seminars)} seminars to seminars.csv")
+        logger.info(f"Successfully saved {len(seminars)} seminars to seminars.csv")
         return seminars
 
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error(f"Error during scraping: {e}", exc_info=True)
         return None
 
 
