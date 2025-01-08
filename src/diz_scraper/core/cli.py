@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from diz_scraper.config import settings
+from ..config import settings
 
 
 def setup_logging(debug: bool = False) -> None:
@@ -73,7 +73,7 @@ def main() -> Optional[int]:
     setup_logging(args.debug)
     
     try:
-        from diz_scraper.core.scraper import scrape_seminars
+        from .scraper import scrape_seminars
         
         seminars = scrape_seminars(
             output_file=args.output,

@@ -33,18 +33,14 @@ ENV/
 *.swp
 *.swo
 
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
 # Project specific
-debug/
-seminars.csv
+output/
+*.csv
+.DS_Store
+.python-version
+
+# Cache directories
+.mypy_cache/
+.pytest_cache/
 .coverage
 htmlcov/
-.pytest_cache/
-.mypy_cache/
-
-# Dependencies
-uv.lock

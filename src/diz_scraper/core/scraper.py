@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Union
 import requests
 from bs4 import BeautifulSoup, Tag
 
-from diz_scraper.config import settings
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 

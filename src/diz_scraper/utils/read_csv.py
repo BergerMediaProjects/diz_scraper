@@ -6,8 +6,8 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from diz_scraper.config import settings
-from diz_scraper.utils.helpers import format_file_size, get_file_size
+from ..config import settings
+from .helpers import format_file_size, get_file_size
 
 logger = logging.getLogger(__name__)
 
