@@ -253,6 +253,7 @@ def scrape_seminars(
     debug_mode: bool = False,
     timeout: int = settings.REQUEST_TIMEOUT,
     max_retries: int = settings.MAX_RETRIES,
+    session: Optional[requests.Session] = None,
 ) -> Optional[List[Dict[str, str]]]:
     """Scrape seminar information from the website.
     
@@ -261,14 +262,16 @@ def scrape_seminars(
         debug_mode: Whether to enable debug mode.
         timeout: Request timeout in seconds.
         max_retries: Maximum number of retries for failed requests.
+        session: Optional requests session to use.
         
     Returns:
         List of dictionaries containing seminar information, or None if scraping failed.
     """
     logger.info(f"Starting scraping from {settings.PROGRAM_LIST_URL}")
 
-    # Create a session to maintain cookies
-    session = requests.Session()
+    # Create or use provided session
+    if session is None:
+        session = requests.Session()
 
     try:
         # Fetch the main page
@@ -284,6 +287,10 @@ def scrape_seminars(
 
         # Find all seminar rows
         seminar_rows = soup.find_all("tr", itemtype="http://schema.org/Event")
+        if not seminar_rows:
+            logger.error("No seminars found in the response")
+            return None
+            
         logger.info(f"Found {len(seminar_rows)} seminars to process")
 
         seminars: List[Dict[str, str]] = []
@@ -365,6 +372,9 @@ def scrape_seminars(
         logger.info(f"Successfully saved {len(seminars)} seminars to {output_file}")
         return seminars
 
+    except requests.RequestException as e:
+        logger.error(f"Network error during scraping: {e}")
+        return None
     except Exception as e:
         logger.error(f"Error during scraping: {e}", exc_info=True)
         return None

@@ -18,8 +18,15 @@ dev = [
     "isort",
     "flake8",
     "mypy",
-    "pytest",
-    "pytest-cov",
+]
+
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.10.0",
+    "pytest-env>=1.0.1",
+    "types-requests",
+    "types-beautifulsoup4",
 ]
 
 [tool.black]
