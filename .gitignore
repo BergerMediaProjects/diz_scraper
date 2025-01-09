@@ -38,6 +38,7 @@ output/
 debug/
 debug_*/
 *.csv
+*.xlsx
 .DS_Store
 .python-version
 

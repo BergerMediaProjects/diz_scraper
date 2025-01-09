@@ -7,6 +7,7 @@ Didaktikzentrum website and process the scraped data.
 
 from .core.scraper import scrape_seminars
 from .utils.read_csv import analyze_csv
+from .utils.export import export_to_excel
 
 __version__ = "0.1.0"
-__all__ = ["scrape_seminars", "analyze_csv"]
+__all__ = ["scrape_seminars", "analyze_csv", "export_to_excel"]
