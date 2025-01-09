@@ -12,6 +12,7 @@ import requests
 from bs4 import BeautifulSoup, Tag
 
 from ..config import settings
+from ..utils.export import export_to_excel
 
 logger = logging.getLogger(__name__)
 
@@ -370,6 +371,14 @@ def scrape_seminars(
             writer.writerows(seminars)
 
         logger.info(f"Successfully saved {len(seminars)} seminars to {output_file}")
+
+        # Export to Excel
+        excel_path = Path(output_file).parent / "seminars.xlsx"
+        if export_to_excel(seminars, excel_path):
+            logger.info(f"Successfully exported to Excel: {excel_path}")
+        else:
+            logger.warning("Excel export failed, but CSV was created successfully")
+
         return seminars
 
     except requests.RequestException as e:

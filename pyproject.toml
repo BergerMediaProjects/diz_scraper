@@ -9,6 +9,7 @@ dependencies = [
     "requests",
     "beautifulsoup4",
     "pandas",
+    "openpyxl",
 ]
 requires-python = ">=3.8"
 
