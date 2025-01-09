@@ -35,6 +35,8 @@ ENV/
 
 # Project specific
 output/
+debug/
+debug_*/
 *.csv
 .DS_Store
 .python-version
